@@ -166,18 +166,7 @@
                 editMode = row;
             });
 
-            // Kembalikan + denda
-            row.querySelector('.kembalikan').addEventListener('click', function() {
-                const today = new Date();
-                const batasKembali = new Date(row.cells[4].textContent);
-
-                if (today > batasKembali) {
-                    row.cells[5].textContent = "Rp 5000";
-                    alert("Buku dikembalikan terlambat. Denda Rp 5000.");
-                } else {
-                    row.cells[5].textContent = "Rp 0";
-                    alert("Buku dikembalikan tepat waktu. Tidak ada denda.");
-                }
+          
             });
 
             dataPinjaman.appendChild(row);
@@ -189,4 +178,5 @@
 </script>
 
 </body>
+
 </html>
