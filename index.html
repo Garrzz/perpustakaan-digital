@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Peminjaman Buku Digital</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f7f7f7;
+            padding: 20px;
+        }
+        h2 {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        h2 img {
+            width: 40px;
+            height: 40px;
+        }
+        form {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 8px;
+            margin: 5px;
+        }
+        table {
+            width: 100%;
+            background: white;
+            border-collapse: collapse;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        button {
+            cursor: pointer;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .hapus {
+            background: red;
+        }
+        .edit {
+            background: orange;
+        }
+    </style>
+</head>
+<body>
+
+<h2>
+    <img src="logo.png" alt="Logo">
+    Peminjaman Buku Perpustakaan Digital
+</h2>
+
+<form id="formPinjam">
+    <input type="text" id="nama" placeholder="Nama Peminjam" required>
+    <input type="text" id="judul" placeholder="Judul Buku" required>
+    <input type="number" id="jumlah" placeholder="Jumlah Buku" min="1" required>
+    <input type="date" id="tanggal" required>
+    <button type="submit">Tambah Pinjaman</button>
+</form>
+
+<table>
+    <thead>
+        <tr>
+            <th>Nama Peminjam</th>
+            <th>Judul Buku</th>
+            <th>Jumlah</th>
+            <th>Tanggal Pinjam</th>
+            <th>Tanggal Kembali</th>
+            <th>Denda</th>
+            <th>Aksi</th>
+        </tr>
+    </thead>
+    <tbody id="dataPinjaman"></tbody>
+</table>
+
+<script>
+    const form = document.getElementById('formPinjam');
+    const dataPinjaman = document.getElementById('dataPinjaman');
+    const inputNama = document.getElementById('nama');
+    const inputJudul = document.getElementById('judul');
+    const inputJumlah = document.getElementById('jumlah');
+    const inputTanggal = document.getElementById('tanggal');
+
+    let editMode = null;
+
+    // Set tanggal pinjam otomatis ke hari ini
+    const setToday = () => {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        inputTanggal.value = `${yyyy}-${mm}-${dd}`;
+    };
+    setToday();
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const nama = inputNama.value;
+        const judul = inputJudul.value;
+        const jumlah = inputJumlah.value;
+        const tanggalPinjam = new Date(inputTanggal.value);
+
+        // Hitung tanggal kembali minimal 1 minggu
+        const tanggalKembali = new Date(tanggalPinjam);
+        tanggalKembali.setDate(tanggalKembali.getDate() + 7);
+
+        const yyyyK = tanggalKembali.getFullYear();
+        const mmK = String(tanggalKembali.getMonth() + 1).padStart(2, '0');
+        const ddK = String(tanggalKembali.getDate()).padStart(2, '0');
+        const tglKembaliString = `${yyyyK}-${mmK}-${ddK}`;
+
+        if (editMode) {
+            // Update data edit
+            editMode.cells[0].textContent = nama;
+            editMode.cells[1].textContent = judul;
+            editMode.cells[2].textContent = jumlah;
+            editMode.cells[3].textContent = inputTanggal.value;
+            editMode.cells[4].textContent = tglKembaliString;
+            editMode = null;
+        } else {
+            // Tambah data baru
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${nama}</td>
+                <td>${judul}</td>
+                <td>${jumlah}</td>
+                <td>${inputTanggal.value}</td>
+                <td>${tglKembaliString}</td>
+                <td>Rp 0</td>
+                <td>
+                    <button class="kembalikan">Kembalikan</button>
+                    <button class="edit">Edit</button>
+                    <button class="hapus">Hapus</button>
+                </td>
+            `;
+
+            // Hapus
+            row.querySelector('.hapus').addEventListener('click', function() {
+                row.remove();
+            });
+
+            // Edit
+            row.querySelector('.edit').addEventListener('click', function() {
+                inputNama.value = row.cells[0].textContent;
+                inputJudul.value = row.cells[1].textContent;
+                inputJumlah.value = row.cells[2].textContent;
+                inputTanggal.value = row.cells[3].textContent;
+                editMode = row;
+            });
+
+            // Kembalikan + denda
+            row.querySelector('.kembalikan').addEventListener('click', function() {
+                const today = new Date();
+                const batasKembali = new Date(row.cells[4].textContent);
+
+                if (today > batasKembali) {
+                    row.cells[5].textContent = "Rp 5000";
+                    alert("Buku dikembalikan terlambat. Denda Rp 5000.");
+                } else {
+                    row.cells[5].textContent = "Rp 0";
+                    alert("Buku dikembalikan tepat waktu. Tidak ada denda.");
+                }
+            });
+
+            dataPinjaman.appendChild(row);
+        }
+
+        form.reset();
+        setToday();
+    });
+</script>
+
+</body>
+</html>
